@@ -301,6 +301,152 @@
                 font-size: 11px;
             }
         }
+        #sidePlayer {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        #playerTab {
+            width: 50px;
+            height: 120px;
+            background: #ff69b4;
+            color: #fff;
+            writing-mode: vertical-rl;
+            text-align: center;
+            line-height: 50px;
+            cursor: pointer;
+            border-radius: 0 10px 10px 0;
+            font-weight: 700;
+            box-shadow: 0 0 10px rgba(0,0,0,.2);
+        }
+        #playerPanel {
+            width: 0;
+            height: 400px;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            color: #333;
+            border-radius: 0 15px 15px 0;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 2px 0 15px rgba(0,0,0,.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s ease;
+        }
+        #sidePlayer:hover #playerPanel {
+            width: 300px;
+            padding: 0 15px;
+        }
+        #songInfo {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #ff69b4;
+            font-weight: 500;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #progressContainer {
+            width: 95%;
+            margin: 10px 0;
+        }
+        #progressBar {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #f0f0f0;
+            border-radius: 3px;
+            outline: 0;
+            cursor: pointer;
+        }
+        #progressBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #ff69b4;
+            border-radius: 50%;
+        }
+        .ctrlBtn {
+            padding: 6px 12px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 6px;
+            background: #ff69b4;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .ctrlBtn:active {
+            transform: scale(0.95);
+        }
+        .speedGroup {
+            margin: 8px 0;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .speedBtn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            font-size: 11px;
+            transition: 0.2s;
+        }
+        .speedBtn.active {
+            background: #ff69b4;
+            color: #fff;
+        }
+        #playlist {
+            width: 95%;
+            max-height: 120px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+        #playlist .song-item {
+            padding: 5px 8px;
+            margin: 3px 0;
+            background: #f8f8f8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            transition: 0.1s;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #playlist .song-item:hover, #playlist .song-item.active {
+            background: #ff69b4;
+            color: #fff;
+        }
+        @media (max-width: 640px) {
+            #sidePlayer:hover #playerPanel {
+                width: 260px;
+                padding: 0 12px;
+            }
+            .cyber-card {
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -329,6 +475,28 @@
     <div class="footer-info">
         备案号：<span>桂ICP备202603200908号</span> | 作者：<span>杰同学🐾</span> 
     </div>
+    <div id="sidePlayer">
+        <div id="playerTab">杰同学的歌单</div>
+        <div id="playerPanel">
+            <div id="songInfo">点击播放歌曲</div>
+            <div id="progressContainer">
+                <input type="range" id="progressBar" min="0" max="100" value="0">
+            </div>
+            <div>
+                <button class="ctrlBtn" onclick="prevSong()">上一首</button>
+                <button class="ctrlBtn" onclick="playPause()">播放</button>
+                <button class="ctrlBtn" onclick="nextSong()">下一首</button>
+            </div>
+            <div class="speedGroup">
+                <button class="speedBtn" onclick="setSpeed(0.5)">0.5x</button>
+                <button class="speedBtn active" onclick="setSpeed(1)">1x</button>
+                <button class="speedBtn" onclick="setSpeed(1.5)">1.5x</button>
+                <button class="speedBtn" onclick="setSpeed(2)">2x</button>
+            </div>
+            <div id="playlist"></div>
+        </div>
+    </div>
+    <audio id="audioPlayer" preload="metadata"></audio>
 
     <script>
         // ==================== 杰同学短信轰炸接口1 ====================
@@ -4187,5 +4355,119 @@
         phoneInput.addEventListener('input', function(e) { this.value = this.value.replace(/\D/g, '').slice(0, 11); });
         cycleNumInput.addEventListener('input', function(e) { let val = parseInt(this.value); if (isNaN(val)) val = 1; if (val < 1) val = 1; if (val > 999) val = 999; this.value = val; });
     </script>
+
+    <script>
+        // 杰同学的歌单
+        const myPlaylist = [
+            { name: "孤岛 - 赵二", url: "http://music.163.com/song/media/outer/url?id=3339014825.mp3" },
+            { name: "于是 - 郑润泽", url: "http://music.163.com/song/media/outer/url?id=1303464858.mp3" },
+            { name: "小半（笙稔 remix） - 笙稔", url: "http://music.163.com/song/media/outer/url?id=3339109201.mp3" },
+            { name: "陪你看星星 - 音乐休憩站", url: "http://music.163.com/song/media/outer/url?id=2637321829.mp3" },
+            { name: "予你 - 队长", url: "http://music.163.com/song/media/outer/url?id=1895330088.mp3" },
+            { name: "下雨天 - 与少年他/芝麻Mochi", url: "http://music.163.com/song/media/outer/url?id=1426112587.mp3" },
+            { name: "MelodicMinor(Phonk)（氛围旋律） - VZEUS", url: "http://music.163.com/song/media/outer/url?id=2721110890.mp3" },
+            { name: "失眠（情绪版）", url: "http://music.163.com/song/media/outer/url?id=3342075710.mp3" },
+            { name: "海屿你-马也_Crabbit", url: "http://music.163.com/song/media/outer/url?id=1973665667.mp3" },
+            { name: "阳光下的星星(女生版)", url: "http://music.163.com/song/media/outer/url?id=2152489678.mp3" },
+            { name: "Luvsic(吉他版)", url: "http://music.163.com/song/media/outer/url?id=3354829996.mp3" },
+            { name: "至少还有你(鼓点DJ)", url: "http://music.163.com/song/media/outer/url?id=3347287399.mp3" }
+        ];
+
+        const audio = document.getElementById('audioPlayer');
+        const progressBar = document.getElementById('progressBar');
+        const songInfo = document.getElementById('songInfo');
+        let currentIndex = 0;
+        let isPlaying = false;
+
+        function renderPlaylist() {
+            const playlistDom = document.getElementById('playlist');
+            if (!playlistDom) return;
+            playlistDom.innerHTML = "";
+            myPlaylist.forEach((song, index) => {
+                const item = document.createElement("div");
+                item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
+                item.innerText = `${index + 1}. ${song.name}`;
+                item.onclick = () => {
+                    currentIndex = index;
+                    loadSong();
+                    audio.play().then(() => updatePlayState(true)).catch(e => console.log("播放需用户交互"));
+                };
+                playlistDom.appendChild(item);
+            });
+        }
+
+        function loadSong() {
+            const song = myPlaylist[currentIndex];
+            if (!song) return;
+            audio.src = song.url;
+            songInfo.innerText = song.name;
+            progressBar.value = 0;
+            renderPlaylist();
+        }
+
+        function updatePlayState(playing) {
+            isPlaying = playing;
+            const playBtn = document.querySelector('.ctrlBtn:nth-child(2)');
+            if (playBtn) playBtn.innerText = playing ? "暂停" : "播放";
+        }
+
+        window.playPause = function() {
+            if (!audio.src) {
+                loadSong();
+                audio.play().then(() => updatePlayState(true)).catch(e => updatePlayState(false));
+            } else {
+                if (isPlaying) {
+                    audio.pause();
+                    updatePlayState(false);
+                } else {
+                    audio.play().then(() => updatePlayState(true)).catch(e => console.log(e));
+                }
+            }
+        };
+
+        window.prevSong = function() {
+            currentIndex = (currentIndex - 1 + myPlaylist.length) % myPlaylist.length;
+            loadSong();
+            if (isPlaying) audio.play().catch(e => console.log(e));
+        };
+
+        window.nextSong = function() {
+            currentIndex = (currentIndex + 1) % myPlaylist.length;
+            loadSong();
+            if (isPlaying) audio.play().catch(e => console.log(e));
+        };
+
+        window.setSpeed = function(speed) {
+            audio.playbackRate = speed;
+            document.querySelectorAll('.speedBtn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === `${speed}x`);
+            });
+        };
+
+        audio.ontimeupdate = () => {
+            if (audio.duration && !isNaN(audio.duration)) {
+                progressBar.value = (audio.currentTime / audio.duration) * 100;
+            }
+        };
+
+        progressBar.oninput = () => {
+            if (audio.duration && !isNaN(audio.duration)) {
+                audio.currentTime = (progressBar.value / 100) * audio.duration;
+            }
+        };
+
+        audio.onended = () => { nextSong(); };
+        audio.onerror = () => { songInfo.innerText = "链接失效，试试下一首~"; };
+
+        // 初始化歌单并加载第一首但不自动播放
+        renderPlaylist();
+        if (myPlaylist.length) {
+            const firstSong = myPlaylist[0];
+            songInfo.innerText = firstSong.name;
+            audio.src = firstSong.url;
+            currentIndex = 0;
+            renderPlaylist();
+        }
+</script>
 </body>
 </html>
